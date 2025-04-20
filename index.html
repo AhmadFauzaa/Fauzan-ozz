@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teka-Teki Kata</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f8fafc;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    .container {
+      padding: 40px;
+    }
+    .hidden {
+      display: none;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    .word-box {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .letter {
+      width: 45px;
+      height: 45px;
+      font-size: 24px;
+      text-align: center;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      text-transform: uppercase;
+    }
+    .letter.filled {
+      background-color: #d0f5df;
+      border-color: #4caf50;
+    }
+    .btn {
+      padding: 12px 24px;
+      font-size: 18px;
+      margin: 10px;
+      cursor: pointer;
+      border-radius: 10px;
+      border: none;
+      color: white;
+      background-color: #4f46e5;
+      position: relative;
+      overflow: hidden;
+      animation: pulse 2s infinite;
+      transition: background 0.3s;
+    }
+    .btn:hover {
+      background-color: #4338ca;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+      70% { box-shadow: 0 0 0 20px rgba(79, 70, 229, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+    }
+    #scoreboard {
+      margin-top: 15px;
+      font-size: 16px;
+    }
+    select {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Menu Utama -->
+<div id="mainMenu" class="container">
+  <h1>Game Teka-Teki Kata</h1>
+  <div id="lastScore" style="font-size: 18px; margin: 10px; color: #444;"></div> <!-- skor terakhir -->
+  <button class="btn" onclick="goToSettings()">Pengaturan</button>
+  <button class="btn" onclick="startGame()">Mulai Game</button>
+</div>
+
+<!-- Halaman Pengaturan -->
+<div id="settingsPage" class="container hidden">
+  <h1>Pengaturan Game</h1>
+  <label>Jumlah Soal:</label><br>
+  <select id="jumlahSoal">
+    <option value="10">10 Soal</option>
+    <option value="20">20 Soal</option>
+    <option value="30">30 Soal</option>
+    <option value="50">50 Soal</option>
+  </select><br>
+  <label>Waktu Main (detik):</label><br>
+  <select id="waktuMain">
+    <option value="60">60 detik</option>
+    <option value="90">90 detik</option>
+    <option value="120" selected>120 detik</option>
+  </select><br>
+  <button class="btn" onclick="backToMenu()">Kembali</button>
+</div>
+
+<!-- Halaman Game -->
+<div id="gamePage" class="container hidden">
+  <div id="scoreboard">
+    Skor: <span id="score">0</span> | Waktu: <span id="timer">0</span> detik
+  </div>
+  <div id="wordBox" class="word-box"></div>
+  <div id="question"></div>
+  <button onclick="checkAnswer()">Cek Jawaban</button>
+  <br><br>
+  <button class="btn" style="background:#dc2626" onclick="exitGame()">Kembali ke Menu</button> <!-- Tombol kembali -->
+</div>
+
+<script>
+  const allQuestions = [
+    { soal: "Sifat orang banyak ide", jawaban: "KREATIF" },
+    { soal: "Ibukota Indonesia", jawaban: "JAKARTA" },
+    { soal: "Warna darah", jawaban: "MERAH" },
+    { soal: "Hewan bersirip", jawaban: "IKAN" },
+    { soal: "Benda untuk menulis", jawaban: "PENA" },
+    { soal: "Hewan bertelinga panjang", jawaban: "KELINCI" },
+    { soal: "Planet ketiga", jawaban: "BUMI" },
+    { soal: "Tempat tidur", jawaban: "KASUR" },
+    { soal: "Hari kemerdekaan", jawaban: "TUJUHBELAS" },
+    { soal: "Tempat belajar", jawaban: "SEKOLAH" },
+    { soal: "Mata uang Indonesia", jawaban: "RUPIAH" },
+    { soal: "Bulan pertama", jawaban: "JANUARI" },
+    { soal: "Musuh Spider-Man", jawaban: "VENOM" },
+    { soal: "Benda bulat bermain", jawaban: "BOLA" },
+    { soal: "Sayuran oranye", jawaban: "WORTEL" },
+    { soal: "Binatang bisa terbang", jawaban: "BURUNG" },
+    { soal: "Untuk nonton film", jawaban: "LAYAR" },
+    { soal: "Hewan laut bercangkang", jawaban: "KERANG" },
+    { soal: "Makanan dari beras", jawaban: "NASI" },
+    { soal: "Kendaraan besar", jawaban: "TRUK" },
+    { soal: "Minuman manis dingin", jawaban: "ESJERUK" },
+    { soal: "Benda di dinding", jawaban: "JAM" },
+    { soal: "Musim di Indonesia", jawaban: "HUJAN" },
+    { soal: "Tempat belanja", jawaban: "PASAR" },
+    { soal: "Nama hewan berkaki dua", jawaban: "AYAM" },
+    { soal: "Benda tajam dapur", jawaban: "PISAU" },
+    { soal: "Benda beroda dua", jawaban: "SEPEDA" },
+    { soal: "Kendaraan umum", jawaban: "BUS" },
+    { soal: "Warna daun", jawaban: "HIJAU" },
+    { soal: "Hari istimewa ulang", jawaban: "ULANGTAHUN" },
+    { soal: "Benda kecil bersuara", jawaban: "LONCENG" },
+    { soal: "Benda di sekolah", jawaban: "PAPANTULIS" },
+    { soal: "Mata pelajaran hitung", jawaban: "MATEMATIKA" },
+    { soal: "Angka sebelum dua", jawaban: "SATU" },
+    { soal: "Tempat wisata", jawaban: "PANTAI" },
+    { soal: "Binatang malam", jawaban: "KELELAWAR" },
+    { soal: "Buah warna kuning", jawaban: "PISANG" },
+    { soal: "Binatang melata", jawaban: "ULAR" },
+    { soal: "Makanan Jepang", jawaban: "SUSHI" },
+    { soal: "Benda panas di langit", jawaban: "MATAHARI" },
+    { soal: "Hari tengah minggu", jawaban: "RABU" },
+    { soal: "Benda di dapur", jawaban: "KOMPOR" },
+    { soal: "Tempat membaca", jawaban: "PERPUSTAKAAN" },
+    { soal: "Minuman berkafein", jawaban: "KOPI" },
+    { soal: "Benda penghapus", jawaban: "PENGHAPUS" },
+    { soal: "Hewan lambat", jawaban: "KURA" },
+    { soal: "Benda pipih", jawaban: "KERTAS" },
+    { soal: "Lambang negara", jawaban: "GARUDA" },
+    { soal: "Alat tukang", jawaban: "PALU" }
+  ];
+
+  let questions = [];
+  let current = 0;
+  let score = 0;
+  let time = 60;
+  let timerInterval;
+  let lastScore = 0; // Skor terakhir
+
+  function goToSettings() {
+    document.getElementById("mainMenu").classList.add("hidden");
+    document.getElementById("settingsPage").classList.remove("hidden");
+  }
+
+  function backToMenu() {
+    document.getElementById("settingsPage").classList.add("hidden");
+    document.getElementById("mainMenu").classList.remove("hidden");
+  }
+
+  function startGame() {
+    const jumlah = parseInt(document.getElementById("jumlahSoal").value);
+    time = parseInt(document.getElementById("waktuMain").value);
+    questions = shuffleArray([...allQuestions]).slice(0, jumlah);
+    current = 0;
+    score = 0;
+
+    document.getElementById("mainMenu").classList.add("hidden");
+    document.getElementById("settingsPage").classList.add("hidden");
+    document.getElementById("gamePage").classList.remove("hidden");
+    updateScore();
+    startTimer();
+    loadQuestion();
+  }
+
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function updateScore() {
+    document.getElementById("score").textContent = score;
+    document.getElementById("timer").textContent = time;
+  }
+
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      time--;
+      updateScore();
+      if (time <= 0) {
+        clearInterval(timerInterval);
+        Swal.fire({
+          title: 'Waktu Habis!',
+          text: `Skor Kamu: ${score}`,
+          icon: 'warning',
+          confirmButtonText: 'Kembali ke Menu'
+        }).then(() => {
+          lastScore = score;
+          showLastScore();
+          location.reload(); // reset game
+        });
+      }
+    }, 1000);
+  }
+
+  function loadQuestion() {
+    const wordBox = document.getElementById("wordBox");
+    const questionText = document.getElementById("question");
+    wordBox.innerHTML = "";
+
+    const kata = questions[current].jawaban;
+    questionText.innerText = `Soal: ${questions[current].soal}`;
+
+    for (let i = 0; i < kata.length; i++) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.maxLength = 1;
+      input.className = "letter";
+      input.addEventListener("input", () => {
+        input.classList.add("filled");
+        if (input.nextElementSibling) {
+          input.nextElementSibling.focus();
+        }
+      });
+      wordBox.appendChild(input);
+    }
+  }
+
+  function checkAnswer() {
+    const inputs = document.querySelectorAll(".letter");
+    const userAnswer = Array.from(inputs).map(i => i.value.toUpperCase()).join("");
+    if (userAnswer === questions[current].jawaban) {
+      score += 10;
+      updateScore();
+      Swal.fire({ icon: 'success', title: 'Benar!', timer: 800, showConfirmButton: false });
+      current++;
+      if (current < questions.length) {
+        setTimeout(loadQuestion, 800);
+        } else {
+        // Game selesai, beri skor akhir
+        Swal.fire({
+          title: 'Permainan Selesai!',
+          text: `Skor Akhir Kamu: ${score}`,
+          icon: 'info',
+          confirmButtonText: 'Kembali ke Menu'
+        }).then(() => {
+          lastScore = score;
+          showLastScore();
+          location.reload(); // Reset game
+        });
+      }
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Jawaban Salah!',
+        text: 'Coba lagi!',
+        showConfirmButton: false,
+        timer: 1000
+      });
+    }
+  }
+
+  function exitGame() {
+    clearInterval(timerInterval);
+    lastScore = score;
+    showLastScore();
+    document.getElementById("gamePage").classList.add("hidden");
+    document.getElementById("mainMenu").classList.remove("hidden");
+  }
+
+  // Menampilkan skor terakhir di menu utama
+  function showLastScore() {
+    if (lastScore > 0) {
+      document.getElementById("lastScore").innerText = `Skor Terakhir Kamu: ${lastScore}`;
+    } else {
+      document.getElementById("lastScore").innerText = "Belum ada skor sebelumnya.";
+    }
+  }
+
+  // Inisialisasi tampilan saat halaman dimuat
+  window.onload = function() {
+    showLastScore();
+  };
+</script>
+
+</body>
+</html>
